@@ -19,11 +19,18 @@ router.get(
   "/callback/google",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: "/auth/failure",
+    failureRedirect: "/api/auth/failure",
   }),
   async (req: Request, res: Response) => {
     try {
       const user = req.user as any;
+
+      if (!user) {
+        console.error("❌ No user in callback");
+        return res.redirect("sololev://auth/callback?error=no_user");
+      }
+
+      console.log("✅ User authenticated:", user.email);
 
       // Create JWT token
       const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
@@ -44,13 +51,54 @@ router.get(
         expiresAt,
       });
 
-      console.log("✅ User authenticated, redirecting to app with token");
+      console.log("✅ Session created, redirecting to app with token");
 
-      // Redirect to mobile app using deep link scheme
-      res.redirect(`sololev://auth/callback?token=${token}`);
+      // Send an HTML page that will do the redirect
+      // This works better than direct 302 redirect for deep links
+      const html = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Redirecting...</title>
+            <script>
+              window.location.href = "sololev://auth/callback?token=${token}";
+              // Fallback after 2 seconds
+              setTimeout(function() {
+                document.getElementById('message').innerHTML = 
+                  'If you are not redirected automatically, <a href="sololev://auth/callback?token=${token}">click here</a>';
+              }, 2000);
+            </script>
+          </head>
+          <body style="font-family: system-ui; text-align: center; padding: 50px;">
+            <h2>✅ Authentication Successful</h2>
+            <p id="message">Redirecting to SoloLev app...</p>
+          </body>
+        </html>
+      `;
+
+      res.send(html);
     } catch (error) {
       console.error("Auth callback error:", error);
-      res.status(500).json({ error: "Authentication failed" });
+      const errorHtml = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <title>Authentication Error</title>
+            <script>
+              setTimeout(function() {
+                window.location.href = "sololev://auth/callback?error=auth_failed";
+              }, 1000);
+            </script>
+          </head>
+          <body style="font-family: system-ui; text-align: center; padding: 50px;">
+            <h2>❌ Authentication Failed</h2>
+            <p>Redirecting back to app...</p>
+          </body>
+        </html>
+      `;
+      res.send(errorHtml);
     }
   }
 );

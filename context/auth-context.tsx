@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Get API URL from environment
       const API_URL =
         process.env.EXPO_PUBLIC_API_URL || "https://sololev.vercel.app";
-      console.log("API_URL:", API_URL);
+      console.log("🔗 Starting OAuth flow with API:", API_URL);
 
       // Open Google OAuth in browser
       const result = await WebBrowser.openAuthSessionAsync(
@@ -60,24 +60,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         "sololev://auth/callback"
       );
 
+      console.log("📱 Browser result:", result.type);
+
       if (result.type === "success" && result.url) {
+        console.log("✅ OAuth success, callback URL:", result.url);
+
         // Extract token from callback URL
         const url = new URL(result.url);
         const token = url.searchParams.get("token");
+        const error = url.searchParams.get("error");
+
+        if (error) {
+          console.error("❌ OAuth error:", error);
+          throw new Error(`OAuth failed: ${error}`);
+        }
 
         if (token) {
+          console.log("🔑 Token received, storing and verifying...");
+
           // Store token and verify to get user data
           await storeToken(token);
           const userData = await verifyToken();
 
           if (userData) {
+            console.log("✅ User verified:", userData.email);
             await sessionManager.setSession(token, userData);
             setUser(userData);
+          } else {
+            console.error("❌ Failed to verify user data");
+            throw new Error("Failed to verify user");
           }
+        } else {
+          console.error("❌ No token in callback URL");
+          throw new Error("No token received");
         }
+      } else if (result.type === "cancel") {
+        console.log("⚠️ User cancelled OAuth flow");
+      } else {
+        console.log("⚠️ OAuth result:", result.type);
       }
     } catch (error) {
-      console.error("Sign in error:", error);
+      console.error("❌ Sign in error:", error);
       throw error;
     } finally {
       setIsLoading(false);
