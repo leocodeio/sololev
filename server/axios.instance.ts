@@ -2,7 +2,7 @@ import axios from "axios";
 import * as SecureStore from "expo-secure-store";
 
 // Get the API URL from environment
-const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "https://sololev.vercel.app";
 
 // Create axios instance
 const axiosInstance = axios.create({

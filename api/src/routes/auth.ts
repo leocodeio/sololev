@@ -44,9 +44,10 @@ router.get(
         expiresAt,
       });
 
-      // Redirect to app with token (for mobile app deep linking)
-      const clientUrl = process.env.CLIENT_URL || "http://localhost:8081";
-      res.redirect(`${clientUrl}/auth/callback?token=${token}`);
+      console.log("✅ User authenticated, redirecting to app with token");
+
+      // Redirect to mobile app using deep link scheme
+      res.redirect(`sololev://auth/callback?token=${token}`);
     } catch (error) {
       console.error("Auth callback error:", error);
       res.status(500).json({ error: "Authentication failed" });

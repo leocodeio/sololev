@@ -51,12 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Get API URL from environment
       const API_URL =
-        process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+        process.env.EXPO_PUBLIC_API_URL || "https://sololev.vercel.app";
       console.log("API_URL:", API_URL);
 
       // Open Google OAuth in browser
       const result = await WebBrowser.openAuthSessionAsync(
-        `${API_URL}/auth/google`,
+        `${API_URL}/api/auth/google`,
         "sololev://auth/callback"
       );
 
