@@ -16,7 +16,7 @@ router.get(
 
 // Google callback - handles the OAuth response
 router.get(
-  "/google/callback",
+  "/callback/google",
   passport.authenticate("google", {
     session: false,
     failureRedirect: "/auth/failure",
