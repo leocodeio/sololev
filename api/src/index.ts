@@ -37,6 +37,20 @@ app.use(
 app.use(passport.initialize());
 
 // Routes
+app.get("/", (req, res) => {
+  res.json({
+    message: "🎮 Welcome to SoloLev API",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      auth: "/api/auth",
+      tasks: "/api/tasks",
+      users: "/api/users",
+      health: "/health",
+    },
+  });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/users", userRoutes);
