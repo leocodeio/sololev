@@ -35,6 +35,10 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === "login";
+    const inAuthCallback = segments[0] === "auth"; // Don't redirect during auth callback
+
+    // Skip redirect logic if we're in the auth callback flow
+    if (inAuthCallback) return;
 
     if (!isAuthenticated && !inAuthGroup) {
       // Redirect to login if not authenticated
@@ -51,6 +55,7 @@ function RootLayoutNav() {
     >
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="light" />

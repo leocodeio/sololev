@@ -18,6 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -121,6 +122,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Refresh user state from session manager (useful after deep link callback)
+  const refreshUser = async () => {
+    try {
+      setIsLoading(true);
+      const userData = await sessionManager.initialize();
+      if (userData) {
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error("Refresh user error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -129,6 +145,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         signInWithGoogle,
         signOut,
+        refreshUser,
       }}
     >
       {children}
