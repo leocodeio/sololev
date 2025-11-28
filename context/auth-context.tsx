@@ -1,3 +1,5 @@
+import { logout, storeToken, verifyToken, type User } from "@/server/auth";
+import { sessionManager } from "@/server/session";
 import * as WebBrowser from "expo-web-browser";
 import React, {
   createContext,
@@ -9,13 +11,6 @@ import React, {
 
 // Ensure WebBrowser sessions complete properly
 WebBrowser.maybeCompleteAuthSession();
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -38,11 +33,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkAuthState = async () => {
     try {
-      // TODO: Check stored token and validate with API
-      // For now, just set loading to false
-      setIsLoading(false);
+      // Initialize session manager and check for valid token
+      const user = await sessionManager.initialize();
+      if (user) {
+        setUser(user);
+      }
     } catch (error) {
       console.error("Auth check error:", error);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -51,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
 
-      // TODO: Replace with your actual API URL
+      // Get API URL from environment
       const API_URL =
         process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
 
@@ -67,17 +65,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = url.searchParams.get("token");
 
         if (token) {
-          // TODO: Store token and fetch user data
-          // For now, simulate a successful login
-          setUser({
-            id: "1",
-            name: "Hunter",
-            email: "hunter@sololev.app",
-          });
+          // Store token and verify to get user data
+          await storeToken(token);
+          const userData = await verifyToken();
+
+          if (userData) {
+            await sessionManager.setSession(token, userData);
+            setUser(userData);
+          }
         }
       }
     } catch (error) {
       console.error("Sign in error:", error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     try {
       setIsLoading(true);
-      // TODO: Call logout API and clear stored token
+      // Call logout API and clear session
+      await logout();
+      await sessionManager.clearSession();
       setUser(null);
     } catch (error) {
       console.error("Sign out error:", error);
